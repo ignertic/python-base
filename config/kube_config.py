@@ -481,11 +481,17 @@ def _get_kube_config_loader_for_yaml_file(filename, **kwargs):
             config_base_path=os.path.abspath(os.path.dirname(filename)),
             **kwargs)
 
+def _config_last_modified_time(file):
+    stat = os.stat(file)
+    return stat.st_mtime
 
 def list_kube_config_contexts(config_file=None):
 
     if config_file is None:
-        config_file = os.path.expanduser(KUBE_CONFIG_DEFAULT_LOCATION)
+        config_files = KUBE_CONFIG_DEFAULT_LOCATION.split(":")
+        config_file_mtimes = map(_config_last_modified_time, config_files)
+        # grab the last modified config file
+        config_file = config_files[config_file_mtime.index(max(config_file_mtimes))] #os.path.expanduser(KUBE_CONFIG_DEFAULT_LOCATION)
 
     loader = _get_kube_config_loader_for_yaml_file(config_file)
     return loader.list_contexts(), loader.current_context
